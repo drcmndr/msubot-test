@@ -1,0 +1,15 @@
+# Dockerfile.actions
+FROM rasa/rasa-sdk:3.6.2
+
+# Switch to root to install dependencies
+USER root
+
+# Copy custom actions code
+COPY ./actions /app/actions
+
+# If you have additional requirements for your actions
+COPY ./actions/requirements-actions.txt /app/
+RUN pip install -r /app/requirements-actions.txt
+
+# Switch back to non-root user
+USER 1001

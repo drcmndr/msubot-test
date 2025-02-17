@@ -1,0 +1,15 @@
+FROM rasa/rasa:3.6.2
+
+# Install spacy
+USER root
+RUN pip install spacy
+RUN python -m spacy download en_core_web_md
+
+COPY . /app
+WORKDIR /app
+
+RUN rasa train
+
+EXPOSE 5005
+
+CMD ["run", "--enable-api", "--cors", "*"]
