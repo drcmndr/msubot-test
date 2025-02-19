@@ -388,8 +388,8 @@ import logging
 # Configure logging and port
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-port = int(os.getenv('PORT', 5005))
-logger.info(f"Port configured as: {port}")  # Debug line for port configuration
+port = int(os.getenv('PORT', 10000))
+logger.info(f"Port configured as: {port}")
 
 app = Flask(__name__)
 
