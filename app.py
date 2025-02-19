@@ -249,19 +249,141 @@
 
 # app.py
 
+# from flask import Flask, request, jsonify
+# from flask_cors import CORS
+# from rasa.core.agent import Agent
+# import asyncio
+# import os
+# import sys
+# import glob
+# import logging
+# import tensorflow as tf
+
+# # Suppress tensorflow logging
+# tf.get_logger().setLevel('ERROR')
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+# # Configure logging
+# logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger(__name__)
+
+# app = Flask(__name__)
+
+# # Configure CORS for production
+# CORS(app, 
+#      resources={
+#          r"/*": {
+#              "origins": [
+#                  "http://localhost:8000",
+#                  "http://127.0.0.1:8000",
+#                  "http://localhost:5500",
+#                  "http://127.0.0.1:5500",
+#                  "https://msubot-test.onrender.com",
+#                  "https://drcmndr.github.io",
+#                  "https://drcmndr.github.io/msubot-frontend",
+#                  "*"
+#              ],
+#              "methods": ["GET", "POST", "OPTIONS"],
+#              "allow_headers": ["Content-Type"],
+#              "expose_headers": ["Content-Type"],
+#              "supports_credentials": True,
+#              "max_age": 3600
+#          }
+#      })
+
+# # Initialize Rasa agent globally
+# try:
+#     model_path = "models/20250219-213623-prompt-factor.tar.gz"  # Your specific model
+#     agent = Agent.load(model_path)
+#     logger.info("Model loaded successfully!")
+# except Exception as e:
+#     logger.error(f"Error loading model: {e}")
+#     agent = None
+
+# @app.route('/', methods=['GET'])
+# def index():
+#     return jsonify({"status": "Rasa server is running"})
+
+# @app.route('/health', methods=['GET'])
+# def health_check():
+#     return jsonify({
+#         "status": "healthy",
+#         "model_status": "loaded" if agent else "not_loaded",
+#         "model_path": model_path if 'model_path' in locals() else None
+#     })
+
+# @app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
+# async def webhook():
+#     if request.method == 'OPTIONS':
+#         response = jsonify({'status': 'OK'})
+#         response.headers.add('Access-Control-Allow-Origin', '*')
+#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Accept')
+#         response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+#         response.headers.add('Access-Control-Expose-Headers', 'Content-Type')
+#         return response, 200
+        
+#     if not agent:
+#         return jsonify({"error": "No model loaded. Please train the model first."}), 503
+        
+#     try:
+#         data = request.json
+#         message = data.get('message')
+#         sender_id = data.get('sender', 'default')
+        
+#         logger.info(f"Received message: {message} from sender: {sender_id}")
+        
+#         if not message:
+#             return jsonify({"error": "No message provided"}), 400
+        
+#         responses = await agent.handle_text(message)
+#         logger.info(f"Bot responses: {responses}")
+        
+#         formatted_responses = []
+#         for response in responses:
+#             if isinstance(response, dict) and 'text' in response:
+#                 formatted_responses.append({
+#                     'recipient_id': sender_id,
+#                     'text': response['text']
+#                 })
+#             elif isinstance(response, str):
+#                 formatted_responses.append({
+#                     'recipient_id': sender_id,
+#                     'text': response
+#                 })
+        
+#         response = jsonify(formatted_responses)
+#         response.headers.add('Access-Control-Allow-Origin', '*')
+#         response.headers.add('Access-Control-Expose-Headers', 'Content-Type')
+#         return response
+        
+#     except Exception as e:
+#         logger.error(f"Error processing message: {e}")
+#         return jsonify({"error": str(e)}), 500
+
+# # Make sure event loop is properly handled for async operations
+# def make_event_loop():
+#     try:
+#         return asyncio.get_event_loop()
+#     except RuntimeError:
+#         loop = asyncio.new_event_loop()
+#         asyncio.set_event_loop(loop)
+#         return loop
+
+# if __name__ == '__main__':
+#     port = int(os.environ.get('PORT', 10000))
+#     logger.info(f"\nServer is running on http://0.0.0.0:{port}")
+#     app.run(host='0.0.0.0', port=port)
+
+
+
+
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from rasa.core.agent import Agent
 import asyncio
 import os
-import sys
-import glob
 import logging
-import tensorflow as tf
-
-# Suppress tensorflow logging
-tf.get_logger().setLevel('ERROR')
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -269,7 +391,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# Configure CORS for production
+# Configure CORS
 CORS(app, 
      resources={
          r"/*": {
@@ -278,98 +400,62 @@ CORS(app,
                  "http://127.0.0.1:8000",
                  "http://localhost:5500",
                  "http://127.0.0.1:5500",
-                 "https://msubot-test.onrender.com",
                  "https://drcmndr.github.io",
                  "https://drcmndr.github.io/msubot-frontend",
                  "*"
              ],
              "methods": ["GET", "POST", "OPTIONS"],
              "allow_headers": ["Content-Type"],
-             "expose_headers": ["Content-Type"],
-             "supports_credentials": True,
-             "max_age": 3600
+             "expose_headers": ["Content-Type"]
          }
      })
 
-# Initialize Rasa agent globally
+# Initialize Rasa agent
+model_path = os.getenv('RASA_MODEL', 'models/20250219-213623-prompt-factor.tar.gz')
 try:
-    model_path = "models/20250219-213623-prompt-factor.tar.gz"  # Your specific model
     agent = Agent.load(model_path)
-    logger.info("Model loaded successfully!")
+    logger.info(f"Model loaded successfully from {model_path}")
 except Exception as e:
     logger.error(f"Error loading model: {e}")
     agent = None
 
-@app.route('/', methods=['GET'])
-def index():
-    return jsonify({"status": "Rasa server is running"})
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({
-        "status": "healthy",
-        "model_status": "loaded" if agent else "not_loaded",
-        "model_path": model_path if 'model_path' in locals() else None
-    })
+@app.route('/')
+def home():
+    return jsonify({"status": "alive", "model_loaded": agent is not None})
 
 @app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
 async def webhook():
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'OK'})
         response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Accept')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
         response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        response.headers.add('Access-Control-Expose-Headers', 'Content-Type')
         return response, 200
-        
+
     if not agent:
-        return jsonify({"error": "No model loaded. Please train the model first."}), 503
-        
+        return jsonify({"error": "No model loaded"}), 503
+
     try:
         data = request.json
-        message = data.get('message')
+        user_message = data.get('message')
         sender_id = data.get('sender', 'default')
-        
-        logger.info(f"Received message: {message} from sender: {sender_id}")
-        
-        if not message:
+
+        if not user_message:
             return jsonify({"error": "No message provided"}), 400
+
+        responses = await agent.handle_text(user_message)
+        response = jsonify([{
+            'recipient_id': sender_id,
+            'text': r.get('text', str(r)) if isinstance(r, dict) else str(r)
+        } for r in responses])
         
-        responses = await agent.handle_text(message)
-        logger.info(f"Bot responses: {responses}")
-        
-        formatted_responses = []
-        for response in responses:
-            if isinstance(response, dict) and 'text' in response:
-                formatted_responses.append({
-                    'recipient_id': sender_id,
-                    'text': response['text']
-                })
-            elif isinstance(response, str):
-                formatted_responses.append({
-                    'recipient_id': sender_id,
-                    'text': response
-                })
-        
-        response = jsonify(formatted_responses)
         response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Expose-Headers', 'Content-Type')
         return response
-        
+
     except Exception as e:
         logger.error(f"Error processing message: {e}")
         return jsonify({"error": str(e)}), 500
 
-# Make sure event loop is properly handled for async operations
-def make_event_loop():
-    try:
-        return asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        return loop
-
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 10000))
-    logger.info(f"\nServer is running on http://0.0.0.0:{port}")
+    port = int(os.getenv('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
