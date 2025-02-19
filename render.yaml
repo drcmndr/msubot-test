@@ -1,18 +1,21 @@
+
 # services:
 #   - type: web
 #     name: msuitit-alab-chatbot
 #     env: python
 #     buildCommand: |
 #       python -m pip install --upgrade pip
-#       pip install rasa flask flask-cors
-#       rasa train
-#     startCommand: python app.py
+#       pip install -r requirements.txt
+#       pip install spacy
+#       python -m spacy download en_core_web_md
+#     startCommand: |
+#       rasa run --enable-api --cors "*" --port $PORT --model models/20250211-125822-mild-embed.tar.gz
 #     envVars:
 #       - key: PYTHON_VERSION
 #         value: 3.9.0
 #       - key: PORT
 #         value: 5005
-#     healthCheckPath: /health
+
 
 
 services:
@@ -22,8 +25,9 @@ services:
     buildCommand: |
       python -m pip install --upgrade pip
       pip install -r requirements.txt
-      pip install spacy
+      pip install spacy==3.5.2
       python -m spacy download en_core_web_md
+      python -c "import spacy; nlp=spacy.load('en_core_web_md'); print('SpaCy model loaded successfully!')"
     startCommand: |
       rasa run --enable-api --cors "*" --port $PORT --model models/20250211-125822-mild-embed.tar.gz
     envVars:
