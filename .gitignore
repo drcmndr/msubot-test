@@ -1,5 +1,5 @@
 # Rasa specific
-models/
+# models/
 .rasa/
 story_graph.dot
 

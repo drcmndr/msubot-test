@@ -1,15 +1,32 @@
+# services:
+#   - type: web
+#     name: msuitit-alab-chatbot
+#     env: python
+#     buildCommand: |
+#       python -m pip install --upgrade pip
+#       pip install rasa flask flask-cors
+#       rasa train
+#     startCommand: python app.py
+#     envVars:
+#       - key: PYTHON_VERSION
+#         value: 3.9.0
+#       - key: PORT
+#         value: 5005
+#     healthCheckPath: /health
+
+
 services:
   - type: web
     name: msuitit-alab-chatbot
     env: python
     buildCommand: |
       python -m pip install --upgrade pip
-      pip install rasa flask flask-cors
-      rasa train
-    startCommand: python app.py
+      pip install -r requirements.txt
+      # No need for rasa train since we're using existing model
+    startCommand: |
+      rasa run --enable-api --cors "*" --port $PORT --model models/20250211-125822-mild-embed.tar.gz
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
       - key: PORT
         value: 5005
-    healthCheckPath: /health
