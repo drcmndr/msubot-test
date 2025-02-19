@@ -18,6 +18,29 @@
 #         value: 5005
 
 
+# we'll be back wit this
+
+# services:
+#   - type: web
+#     name: msuitit-alab-chatbot
+#     env: python
+#     buildCommand: |
+#       python -m pip install --upgrade pip
+#       pip install -r requirements.txt
+#       pip install spacy==3.5.2
+#       python -c "import spacy; nlp=spacy.load('en_core_web_sm'); print('SpaCy model loaded successfully!')"
+#     startCommand: |
+#       gunicorn --bind 0.0.0.0:$PORT --worker-class gthread --workers 1 --threads 8 app:app
+#     envVars:
+#       - key: PYTHON_VERSION
+#         value: 3.9.0
+#       - key: PORT
+#         value: 10000
+#     scaling:
+#       minInstances: 1
+#       maxInstances: 1
+#     resources:
+#       memory: 512Mi
 
 services:
   - type: web
@@ -28,13 +51,16 @@ services:
       pip install -r requirements.txt
       pip install spacy==3.5.2
       python -c "import spacy; nlp=spacy.load('en_core_web_sm'); print('SpaCy model loaded successfully!')"
-    startCommand: |
-      gunicorn --bind 0.0.0.0:$PORT --worker-class gthread --workers 1 --threads 8 app:app
+    startCommand: ./start.sh
+    # startCommand: |
+    #   rasa run --enable-api --cors "*" --port $PORT --model models/20250219-213623-prompt-factor.tar.gz --endpoints endpoints.yml
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
       - key: PORT
         value: 10000
+      - key: PYTHONUNBUFFERED
+        value: "true"
     scaling:
       minInstances: 1
       maxInstances: 1
