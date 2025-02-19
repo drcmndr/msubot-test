@@ -224,10 +224,10 @@ function sendMessageToServer(message) {
     // Use environment-based URL (remove the trailing slash from the Render URL)
     const BACKEND_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:5005' 
-        : 'https://msubot-test.onrender.com';  // Remove trailing slash
+        : 'https://msubot-test.onrender.com';  // Make sure this matches your Render URL exactly
     
     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
-    console.log('Sending message to server:', { message, url });  // Log the full URL
+    console.log('Sending message to server:', { message, url });
     
     fetch(url, {
         method: 'POST',
@@ -236,7 +236,7 @@ function sendMessageToServer(message) {
             'Accept': 'application/json'
         },
         mode: 'cors',
-        credentials: 'include',  // Add this for cookies if needed
+        credentials: 'omit',  // Change from 'include' to 'omit' since we don't need cookies
         body: JSON.stringify({ 
             sender: "user",
             message: message 
