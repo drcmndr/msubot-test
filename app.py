@@ -137,6 +137,7 @@ CORS(app,
                  "http://localhost:5500",
                  "http://127.0.0.1:5500",
                  "https://msubot-test.onrender.com",  # Your Render backend URL
+                 "https://drcmndr.github.io", # Your Pages frontend URL
                  "*"  # Temporarily allow all origins for testing
              ],
              "methods": ["GET", "POST", "OPTIONS"],
