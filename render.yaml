@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: msuitit-alab-chatbot
+    env: python
+    buildCommand: |
+      python -m pip install --upgrade pip
+      pip install rasa flask flask-cors
+      rasa train
+    startCommand: python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: PORT
+        value: 5005
+    healthCheckPath: /health

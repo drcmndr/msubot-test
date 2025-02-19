@@ -126,15 +126,15 @@ function scrollToBottom() {
     }
 }
 
+
 // function sendMessageToServer(message) {
-//     const url = 'http://localhost:5005/chat';
+//     const url = 'http://localhost:5005/webhooks/rest/webhook';
 //     console.log('Sending message to server:', { message });
     
 //     fetch(url, {
 //         method: 'POST',
 //         headers: {
-//             'Content-Type': 'application/json',
-//             'Accept': 'application/json'
+//             'Content-Type': 'application/json'
 //         },
 //         mode: 'cors',
 //         body: JSON.stringify({ 
@@ -144,8 +144,6 @@ function scrollToBottom() {
 //     })
 //     .then(response => {
 //         console.log('Response status:', response.status);
-//         console.log('Response headers:', response.headers);
-        
 //         if (!response.ok) {
 //             throw new Error(`Server responded with status: ${response.status}`);
 //         }
@@ -155,12 +153,12 @@ function scrollToBottom() {
 //         console.log('Received response:', data);
 //         removeTypingIndicator();
         
-//         if (data.message) {
-//             addMessageWithTypewriterEffect("bot", data.message);
-//         } else if (data.error) {
-//             addMessageWithTypewriterEffect("bot", `Error: ${data.error}`);
+//         if (Array.isArray(data) && data.length > 0) {
+//             // Combine multiple messages if present
+//             const messages = data.map(response => response.text).join('\n\n');
+//             addMessageWithTypewriterEffect("bot", messages);
 //         } else {
-//             addMessageWithTypewriterEffect("bot", "I received your message but I'm not sure how to respond.");
+//             addMessageWithTypewriterEffect("bot", "I'm not sure how to respond to that.");
 //         }
 //     })
 //     .catch((error) => {
@@ -173,9 +171,63 @@ function scrollToBottom() {
 //     });
 // }
 
+
+// function sendMessageToServer(message) {
+//     // Use environment-based URL
+//     const BACKEND_URL = window.location.hostname === 'localhost' 
+//         ? 'http://localhost:5005' 
+//         : 'https://msubot-test.onrender.com/';
+    
+//     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
+//     console.log('Sending message to server:', { message });
+    
+//     fetch(url, {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json'
+//         },
+//         mode: 'cors',
+//         body: JSON.stringify({ 
+//             sender: "user",
+//             message: message 
+//         })
+//     })
+//     .then(response => {
+//         console.log('Response status:', response.status);
+//         if (!response.ok) {
+//             throw new Error(`Server responded with status: ${response.status}`);
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         console.log('Received response:', data);
+//         removeTypingIndicator();
+        
+//         if (Array.isArray(data) && data.length > 0) {
+//             const messages = data.map(response => response.text).join('\n\n');
+//             addMessageWithTypewriterEffect("bot", messages);
+//         } else {
+//             addMessageWithTypewriterEffect("bot", "I'm not sure how to respond to that.");
+//         }
+//     })
+//     .catch((error) => {
+//         console.error('Network or parsing error:', error);
+//         removeTypingIndicator();
+//         addMessageWithTypewriterEffect(
+//             "bot", 
+//             `Sorry, I encountered an error: ${error.message}. Please try again later.`
+//         );
+//     });
+// }
+
 function sendMessageToServer(message) {
-    const url = 'http://localhost:5005/webhooks/rest/webhook';
-    console.log('Sending message to server:', { message });
+    // Use environment-based URL (remove the trailing slash from the Render URL)
+    const BACKEND_URL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:5005' 
+        : 'https://msubot-test.onrender.com';  // Remove trailing slash
+    
+    const url = `${BACKEND_URL}/webhooks/rest/webhook`;
+    console.log('Sending message to server:', { message, url });  // Log the full URL
     
     fetch(url, {
         method: 'POST',
@@ -184,6 +236,7 @@ function sendMessageToServer(message) {
             'Accept': 'application/json'
         },
         mode: 'cors',
+        credentials: 'include',  // Add this for cookies if needed
         body: JSON.stringify({ 
             sender: "user",
             message: message 
@@ -191,6 +244,8 @@ function sendMessageToServer(message) {
     })
     .then(response => {
         console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);  // Add headers logging
+        
         if (!response.ok) {
             throw new Error(`Server responded with status: ${response.status}`);
         }
@@ -200,9 +255,7 @@ function sendMessageToServer(message) {
         console.log('Received response:', data);
         removeTypingIndicator();
         
-        // Handle Rasa's response format
         if (Array.isArray(data) && data.length > 0) {
-            // Combine multiple messages if present
             const messages = data.map(response => response.text).join('\n\n');
             addMessageWithTypewriterEffect("bot", messages);
         } else {
@@ -214,10 +267,11 @@ function sendMessageToServer(message) {
         removeTypingIndicator();
         addMessageWithTypewriterEffect(
             "bot", 
-            `Sorry, I encountered an error: ${error.message}. Please ensure the Rasa server is running on port 5005.`
+            `Sorry, I encountered an error: ${error.message}. Please try again later.`
         );
     });
 }
+
 
 function addMessageWithTypewriterEffect(sender, message) {
     const messagesDiv = document.getElementById("messages");
