@@ -385,9 +385,11 @@ import asyncio
 import os
 import logging
 
-# Configure logging
+# Configure logging and port
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+port = int(os.getenv('PORT', 5005))
+logger.info(f"Port configured as: {port}")  # Debug line for port configuration
 
 app = Flask(__name__)
 
@@ -421,7 +423,20 @@ except Exception as e:
 
 @app.route('/')
 def home():
-    return jsonify({"status": "alive", "model_loaded": agent is not None})
+    return jsonify({
+        "status": "alive", 
+        "model_loaded": agent is not None,
+        "port": port  # Added port to health check response
+    })
+
+@app.route('/health')
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "port": port,
+        "model_loaded": agent is not None,
+        "model_path": model_path
+    })
 
 @app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
 async def webhook():
@@ -457,5 +472,6 @@ async def webhook():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5005)) 
+    logger.info(f"Starting server on port {port}")  # Debug line for server start
+    logger.info(f"Server will be accessible at http://0.0.0.0:{port}")
     app.run(host='0.0.0.0', port=port)
