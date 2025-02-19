@@ -22,7 +22,8 @@ services:
     buildCommand: |
       python -m pip install --upgrade pip
       pip install -r requirements.txt
-      # No need for rasa train since we're using existing model
+      pip install spacy
+      python -m spacy download en_core_web_md
     startCommand: |
       rasa run --enable-api --cors "*" --port $PORT --model models/20250211-125822-mild-embed.tar.gz
     envVars:
