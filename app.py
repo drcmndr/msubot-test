@@ -584,15 +584,20 @@ logger.info(f"Port configured as: {port}")
 
 app = Flask(__name__)
 
-# Configure CORS - Updated configuration
+# Configure CORS
 CORS(app, 
      resources={
          r"/*": {
-             "origins": ["https://drcmndr.github.io", "http://localhost:5500"],
+             "origins": [
+                 "https://drcmndr.github.io",
+                 "http://localhost:5500",
+                 "http://127.0.0.1:5500"
+             ],
              "methods": ["GET", "POST", "OPTIONS"],
              "allow_headers": ["Content-Type"],
              "expose_headers": ["Content-Type"],
-             "supports_credentials": False  # Changed from True to False
+             "allow_credentials": False,  # Changed this
+             "max_age": 3600
          }
      })
 
@@ -621,12 +626,9 @@ def home():
     })
 
 @app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
-async def webhook():
+def webhook():  # Removed async
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'OK'})
-        response.headers.add('Access-Control-Allow-Origin', 'https://drcmndr.github.io')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
         return response, 200
 
     if not agent:
@@ -640,14 +642,12 @@ async def webhook():
         if not user_message:
             return jsonify({"error": "No message provided"}), 400
 
-        responses = await agent.handle_text(user_message)
-        response = jsonify([{
+        # Handle the async call differently
+        responses = app.ensure_sync(agent.handle_text)(user_message)
+        return jsonify([{
             'recipient_id': sender_id,
             'text': r.get('text', str(r)) if isinstance(r, dict) else str(r)
         } for r in responses])
-        
-        response.headers.add('Access-Control-Allow-Origin', 'https://drcmndr.github.io')
-        return response
 
     except Exception as e:
         logger.error(f"Error processing message: {e}")
