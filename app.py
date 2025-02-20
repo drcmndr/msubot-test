@@ -566,7 +566,103 @@
 
 
 
-# app.py test 3 
+# app.py test (progress)
+
+# from flask import Flask, jsonify, request
+# from flask_cors import CORS
+# from rasa.core.agent import Agent
+# import os
+# import logging
+# from threading import Thread
+
+# logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger(__name__)
+
+# port = int(os.getenv('PORT', 10000))
+# logger.info(f"Port configured as: {port}")
+
+# app = Flask(__name__)
+
+# # Configure CORS for the base domain
+# CORS(app, 
+#      resources={
+#          r"/*": {
+#              "origins": ["https://drcmndr.github.io"],  # Changed this
+#              "methods": ["GET", "POST", "OPTIONS"],
+#              "allow_headers": ["Content-Type"],
+#              "supports_credentials": False
+#          }
+#      })
+
+# @app.after_request
+# def after_request(response):
+#     response.headers['Access-Control-Allow-Origin'] = 'https://drcmndr.github.io'  # Changed this
+#     response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+#     response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+#     return response
+
+# # Global agent variable
+# agent = None
+
+# def load_agent():
+#     global agent
+#     try:
+#         model_path = os.getenv('RASA_MODEL', 'models/20250219-213623-prompt-factor.tar.gz')
+#         agent = Agent.load(model_path)
+#         logger.info(f"Model loaded successfully from {model_path}")
+#     except Exception as e:
+#         logger.error(f"Error loading model: {e}")
+
+# # Start model loading in background
+# Thread(target=load_agent, daemon=True).start()
+
+# @app.route('/')
+# def home():
+#     return jsonify({
+#         "status": "alive",
+#         "port": port,
+#         "model_loaded": agent is not None
+#     })
+
+# @app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
+# def webhook():
+#     # Handle preflight request
+#     if request.method == 'OPTIONS':
+#         response = jsonify({'status': 'OK'})
+#         response.headers.add('Access-Control-Allow-Origin', '*')
+#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+#         response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+#         return response
+
+#     if not agent:
+#         return jsonify({"error": "No model loaded"}), 503
+
+#     try:
+#         data = request.json
+#         user_message = data.get('message')
+#         sender_id = data.get('sender', 'default')
+
+#         if not user_message:
+#             return jsonify({"error": "No message provided"}), 400
+
+#         responses = app.ensure_sync(agent.handle_text)(user_message)
+#         return jsonify([{
+#             'recipient_id': sender_id,
+#             'text': r.get('text', str(r)) if isinstance(r, dict) else str(r)
+#         } for r in responses])
+
+#     except Exception as e:
+#         logger.error(f"Error processing message: {e}")
+#         return jsonify({"error": str(e)}), 500
+
+# if __name__ == '__main__':
+#     logger.info(f"Starting server on port {port}")
+#     app.run(host='0.0.0.0', port=port)
+
+
+
+# app.py 4
+
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -574,6 +670,7 @@ from rasa.core.agent import Agent
 import os
 import logging
 from threading import Thread
+import time
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -583,35 +680,33 @@ logger.info(f"Port configured as: {port}")
 
 app = Flask(__name__)
 
-# Configure CORS for the base domain
 CORS(app, 
      resources={
          r"/*": {
-             "origins": ["https://drcmndr.github.io"],  # Changed this
+             "origins": ["https://drcmndr.github.io"],
              "methods": ["GET", "POST", "OPTIONS"],
              "allow_headers": ["Content-Type"],
              "supports_credentials": False
          }
      })
 
-@app.after_request
-def after_request(response):
-    response.headers['Access-Control-Allow-Origin'] = 'https://drcmndr.github.io'  # Changed this
-    response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    return response
-
 # Global agent variable
 agent = None
+agent_loading = False
 
 def load_agent():
-    global agent
+    global agent, agent_loading
+    agent_loading = True
     try:
         model_path = os.getenv('RASA_MODEL', 'models/20250219-213623-prompt-factor.tar.gz')
+        logger.info("Starting to load Rasa model...")
         agent = Agent.load(model_path)
         logger.info(f"Model loaded successfully from {model_path}")
     except Exception as e:
         logger.error(f"Error loading model: {e}")
+        agent = None
+    finally:
+        agent_loading = False
 
 # Start model loading in background
 Thread(target=load_agent, daemon=True).start()
@@ -621,21 +716,34 @@ def home():
     return jsonify({
         "status": "alive",
         "port": port,
-        "model_loaded": agent is not None
+        "model_loaded": agent is not None,
+        "model_loading": agent_loading
     })
 
 @app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
 def webhook():
-    # Handle preflight request
     if request.method == 'OPTIONS':
-        response = jsonify({'status': 'OK'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        return response
+        return jsonify({'status': 'OK'})
 
+    # Check if model is still loading
+    if agent_loading:
+        return jsonify({
+            "error": "Model is still loading, please try again in a few seconds",
+            "status": "loading"
+        }), 503
+
+    # Check if model failed to load
     if not agent:
-        return jsonify({"error": "No model loaded"}), 503
+        try:
+            # Try to load the model again
+            Thread(target=load_agent, daemon=True).start()
+            return jsonify({
+                "error": "Model not loaded, attempting to reload. Please try again in a few seconds",
+                "status": "reloading"
+            }), 503
+        except Exception as e:
+            logger.error(f"Error reloading model: {e}")
+            return jsonify({"error": "Model loading failed"}), 503
 
     try:
         data = request.json

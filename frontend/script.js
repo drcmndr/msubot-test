@@ -323,6 +323,59 @@ function scrollToBottom() {
 //     });
 // }
 
+// sendMessageToServer new progress
+
+// function sendMessageToServer(message) {
+//     const BACKEND_URL = window.location.hostname === 'localhost' 
+//         ? 'http://localhost:10000' 
+//         : 'https://msubot-test.onrender.com';
+    
+//     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
+//     console.log('Sending message to server:', { message, url });
+    
+//     return fetch(url, {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json'
+//         },
+//         mode: 'cors',
+//         credentials: 'omit',  // Explicitly set to omit
+//         body: JSON.stringify({ 
+//             sender: "user",
+//             message: message 
+//         })
+//     })
+//     .then(response => {
+//         console.log('Response status:', response.status);
+//         console.log('Response headers:', [...response.headers.entries()]);
+        
+//         if (!response.ok) {
+//             throw new Error(`Server responded with status: ${response.status}`);
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         console.log('Received response:', data);
+//         removeTypingIndicator();
+        
+//         if (Array.isArray(data) && data.length > 0) {
+//             const messages = data.map(response => response.text).join('\n\n');
+//             addMessageWithTypewriterEffect("bot", messages);
+//         } else {
+//             addMessageWithTypewriterEffect("bot", "I'm not sure how to respond to that.");
+//         }
+//     })
+//     .catch((error) => {
+//         console.error('Network or parsing error:', error);
+//         removeTypingIndicator();
+//         addMessageWithTypewriterEffect(
+//             "bot", 
+//             `Sorry, I encountered an error: ${error.message}. Please try again later.`
+//         );
+//     });
+// }
+
+
 function sendMessageToServer(message) {
     const BACKEND_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:10000' 
@@ -337,20 +390,33 @@ function sendMessageToServer(message) {
             'Content-Type': 'application/json'
         },
         mode: 'cors',
-        credentials: 'omit',  // Explicitly set to omit
+        credentials: 'omit',
         body: JSON.stringify({ 
             sender: "user",
             message: message 
         })
     })
-    .then(response => {
+    .then(async response => {
         console.log('Response status:', response.status);
         console.log('Response headers:', [...response.headers.entries()]);
         
+        const data = await response.json();
+        
+        if (response.status === 503) {
+            // Model is loading
+            if (data.status === 'loading' || data.status === 'reloading') {
+                // Wait 3 seconds and try again
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                return sendMessageToServer(message); // Retry the request
+            }
+            throw new Error(data.error || 'Service temporarily unavailable');
+        }
+
         if (!response.ok) {
             throw new Error(`Server responded with status: ${response.status}`);
         }
-        return response.json();
+
+        return data;
     })
     .then(data => {
         console.log('Received response:', data);
