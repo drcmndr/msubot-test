@@ -778,6 +778,8 @@ import os
 import logging
 from threading import Thread
 import time
+import sys
+import traceback
 
 logging.basicConfig(
     level=logging.INFO,
@@ -786,7 +788,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 port = int(os.getenv('PORT', 10000))
-logger.info(f"Port configured as: {port}")
+model_path = os.getenv('RASA_MODEL', 'models/20250219-213623-prompt-factor.tar.gz')
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["https://drcmndr.github.io"]}})
@@ -794,38 +796,34 @@ CORS(app, resources={r"/*": {"origins": ["https://drcmndr.github.io"]}})
 # Global variables
 agent = None
 agent_loading = False
-model_path = os.getenv('RASA_MODEL', 'models/20250219-213623-prompt-factor.tar.gz')
-
-def check_model_file():
-    logger.info(f"Checking for model at: {model_path}")
-    if os.path.exists(model_path):
-        logger.info(f"Model file found at {model_path}")
-        return True
-    logger.error(f"Model file not found at {model_path}")
-    return False
+load_error = None
 
 def load_agent():
-    global agent, agent_loading
+    global agent, agent_loading, load_error
     agent_loading = True
+    load_error = None
     
     try:
-        logger.info("Starting agent load process...")
+        logger.info(f"Starting agent load process from {model_path}")
         
-        if not check_model_file():
-            logger.error("Model file not found, cannot load agent")
-            return
-
-        logger.info("Attempting to load Rasa model...")
+        # Debug information
+        logger.info(f"Current working directory: {os.getcwd()}")
+        logger.info(f"Files in models directory: {os.listdir('models')}")
+        
+        # Load the model
         loaded_agent = Agent.load(model_path)
         
         if loaded_agent:
             logger.info("Model loaded successfully!")
             agent = loaded_agent
+            load_error = None
         else:
-            logger.error("Agent loaded but is None")
+            load_error = "Agent loaded as None"
+            logger.error(load_error)
             
     except Exception as e:
-        logger.error(f"Error loading model: {str(e)}", exc_info=True)
+        load_error = f"Error loading model: {str(e)}\n{traceback.format_exc()}"
+        logger.error(load_error)
         agent = None
     finally:
         agent_loading = False
@@ -833,34 +831,47 @@ def load_agent():
 
 @app.route('/')
 def home():
-    model_exists = check_model_file()
+    global agent, agent_loading, load_error
+    
+    # Force load if agent is None and not loading
+    if not agent and not agent_loading:
+        Thread(target=load_agent, daemon=True).start()
+    
     return jsonify({
         "status": "alive",
         "port": port,
         "model_path": model_path,
-        "model_exists": model_exists,
+        "model_exists": os.path.exists(model_path),
         "model_loaded": agent is not None,
-        "model_loading": agent_loading
+        "model_loading": agent_loading,
+        "last_error": load_error
     })
 
 @app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
 def webhook():
+    global agent, agent_loading
+    
     if request.method == 'OPTIONS':
         return jsonify({'status': 'OK'})
 
-    if not check_model_file():
-        return jsonify({"error": "Model file not found"}), 503
-
+    # Auto-load if not loaded
     if not agent and not agent_loading:
-        logger.info("Agent not loaded, attempting to load...")
         Thread(target=load_agent, daemon=True).start()
-        return jsonify({"error": "Model loading, please try again in a few seconds"}), 503
+        return jsonify({
+            "error": "Model loading started, please retry in a few seconds",
+            "details": load_error
+        }), 503
 
     if agent_loading:
-        return jsonify({"error": "Model is still loading"}), 503
+        return jsonify({
+            "error": "Model is still loading, please retry in a few seconds"
+        }), 503
 
     if not agent:
-        return jsonify({"error": "Model failed to load"}), 503
+        return jsonify({
+            "error": "Model failed to load",
+            "details": load_error
+        }), 503
 
     try:
         data = request.json
@@ -880,8 +891,12 @@ def webhook():
         } for r in responses])
 
     except Exception as e:
-        logger.error(f"Error processing message: {str(e)}", exc_info=True)
-        return jsonify({"error": str(e)}), 500
+        error_details = f"Error processing message: {str(e)}\n{traceback.format_exc()}"
+        logger.error(error_details)
+        return jsonify({
+            "error": "Error processing message",
+            "details": error_details
+        }), 500
 
 if __name__ == '__main__':
     # Initial model load attempt
