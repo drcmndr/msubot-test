@@ -44,22 +44,34 @@
 
 # render.yaml
 
+# services:
+#   - type: web
+#     name: msuitit-alab-chatbot
+#     env: python
+#     buildCommand: |
+#       python -m pip install --upgrade pip
+#       pip install -r requirements.txt
+#     startCommand: |
+#       python -m spacy download en_core_web_sm
+#       gunicorn app:app --bind 0.0.0.0:10000 --workers 1 --timeout 180
+#     envVars:
+#       - key: PYTHON_VERSION
+#         value: 3.9.0
+#       - key: PORT
+#         value: 10000
+#       - key: RASA_MODEL
+#         value: models/20250219-213623-prompt-factor.tar.gz
+#     healthCheckPath: /
+#     healthCheckTimeout: 180
+
+
+
 services:
   - type: web
     name: msuitit-alab-chatbot
     env: python
-    buildCommand: |
-      python -m pip install --upgrade pip
-      pip install -r requirements.txt
-    startCommand: |
-      python -m spacy download en_core_web_sm
-      gunicorn app:app --bind 0.0.0.0:10000 --workers 1 --timeout 180
+    buildCommand: pip install flask gunicorn
+    startCommand: gunicorn --bind 0.0.0.0:10000 --log-level debug app:app
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.9.0
       - key: PORT
         value: 10000
-      - key: RASA_MODEL
-        value: models/20250219-213623-prompt-factor.tar.gz
-    healthCheckPath: /
-    healthCheckTimeout: 180
