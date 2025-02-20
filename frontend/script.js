@@ -337,6 +337,7 @@ function sendMessageToServer(message) {
             'Content-Type': 'application/json'
         },
         mode: 'cors',
+        credentials: 'omit',  // Explicitly set to omit
         body: JSON.stringify({ 
             sender: "user",
             message: message 

@@ -220,23 +220,123 @@ function scrollToBottom() {
 //     });
 // }
 
+// function sendMessageToServer(message) {
+//     // Use environment-based URL (remove the trailing slash from the Render URL)
+//     const BACKEND_URL = window.location.hostname === 'localhost' 
+//         ? 'http://localhost:5005' 
+//         : 'https://msubot-test.onrender.com';  // Make sure this matches your Render URL exactly
+    
+//     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
+//     console.log('Sending message to server:', { message, url });
+    
+//     fetch(url, {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//             'Accept': 'application/json'
+//         },
+//         mode: 'cors',
+//         credentials: 'omit',  // Change from 'include' to 'omit' since we don't need cookies
+//         body: JSON.stringify({ 
+//             sender: "user",
+//             message: message 
+//         })
+//     })
+//     .then(response => {
+//         console.log('Response status:', response.status);
+//         console.log('Response headers:', response.headers);  // Add headers logging
+        
+//         if (!response.ok) {
+//             throw new Error(`Server responded with status: ${response.status}`);
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         console.log('Received response:', data);
+//         removeTypingIndicator();
+        
+//         if (Array.isArray(data) && data.length > 0) {
+//             const messages = data.map(response => response.text).join('\n\n');
+//             addMessageWithTypewriterEffect("bot", messages);
+//         } else {
+//             addMessageWithTypewriterEffect("bot", "I'm not sure how to respond to that.");
+//         }
+//     })
+//     .catch((error) => {
+//         console.error('Network or parsing error:', error);
+//         removeTypingIndicator();
+//         addMessageWithTypewriterEffect(
+//             "bot", 
+//             `Sorry, I encountered an error: ${error.message}. Please try again later.`
+//         );
+//     });
+// }
+
+// function sendMessageToServer(message) {
+//     const BACKEND_URL = window.location.hostname === 'localhost' 
+//         ? 'http://localhost:10000'  // Changed to match server port
+//         : 'https://msubot-test.onrender.com';
+    
+//     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
+//     console.log('Sending message to server:', { message, url });
+    
+//     fetch(url, {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//             'Accept': 'application/json'
+//         },
+//         mode: 'cors',
+//         credentials: 'omit',
+//         body: JSON.stringify({ 
+//             sender: "user",
+//             message: message 
+//         })
+//     })
+//     .then(response => {
+//         console.log('Response status:', response.status);
+//         console.log('Response headers:', response.headers);
+        
+//         if (!response.ok) {
+//             throw new Error(`Server responded with status: ${response.status}`);
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         console.log('Received response:', data);
+//         removeTypingIndicator();
+        
+//         if (Array.isArray(data) && data.length > 0) {
+//             const messages = data.map(response => response.text).join('\n\n');
+//             addMessageWithTypewriterEffect("bot", messages);
+//         } else {
+//             addMessageWithTypewriterEffect("bot", "I'm not sure how to respond to that.");
+//         }
+//     })
+//     .catch((error) => {
+//         console.error('Network or parsing error:', error);
+//         removeTypingIndicator();
+//         addMessageWithTypewriterEffect(
+//             "bot", 
+//             `Sorry, I encountered an error: ${error.message}. Please try again later.`
+//         );
+//     });
+// }
+
 function sendMessageToServer(message) {
-    // Use environment-based URL (remove the trailing slash from the Render URL)
     const BACKEND_URL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:5005' 
-        : 'https://msubot-test.onrender.com';  // Remove trailing slash
+        ? 'http://localhost:10000' 
+        : 'https://msubot-test.onrender.com';
     
     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
-    console.log('Sending message to server:', { message, url });  // Log the full URL
+    console.log('Sending message to server:', { message, url });
     
-    fetch(url, {
+    return fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Content-Type': 'application/json'
         },
         mode: 'cors',
-        credentials: 'include',  // Add this for cookies if needed
         body: JSON.stringify({ 
             sender: "user",
             message: message 
@@ -244,7 +344,7 @@ function sendMessageToServer(message) {
     })
     .then(response => {
         console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);  // Add headers logging
+        console.log('Response headers:', [...response.headers.entries()]);
         
         if (!response.ok) {
             throw new Error(`Server responded with status: ${response.status}`);

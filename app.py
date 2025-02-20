@@ -583,8 +583,22 @@ logger.info(f"Port configured as: {port}")
 
 app = Flask(__name__)
 
-# Simple CORS configuration
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, 
+     resources={
+         r"/*": {
+             "origins": ["https://drcmndr.github.io/msubot-frontend"],
+             "methods": ["GET", "POST", "OPTIONS"],
+             "allow_headers": ["Content-Type"],
+             "supports_credentials": False
+         }
+     })
+
+@app.after_request
+def after_request(response):
+    response.headers['Access-Control-Allow-Origin'] = 'https://drcmndr.github.io/msubot-frontend'
+    response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
 
 # Global agent variable
 agent = None
