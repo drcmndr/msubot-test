@@ -338,7 +338,7 @@ function sendMessageToServer(message) {
             'Accept': 'application/json'
         },
         mode: 'cors',
-        credentials: 'omit',  // Keep this as omit
+        credentials: 'omit',
         body: JSON.stringify({ 
             sender: "user",
             message: message 
@@ -346,6 +346,7 @@ function sendMessageToServer(message) {
     })
     .then(response => {
         if (!response.ok) {
+            console.log('Response headers:', Object.fromEntries(response.headers));
             throw new Error(`Server responded with status: ${response.status}`);
         }
         return response.json();

@@ -575,7 +575,6 @@ import os
 import logging
 from threading import Thread
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -584,22 +583,27 @@ logger.info(f"Port configured as: {port}")
 
 app = Flask(__name__)
 
-# Configure CORS
+# Configure CORS globally
 CORS(app, 
      resources={
          r"/*": {
-             "origins": [
-                 "https://drcmndr.github.io",
-                 "http://localhost:5500",
-                 "http://127.0.0.1:5500"
-             ],
+             "origins": ["https://drcmndr.github.io"],
              "methods": ["GET", "POST", "OPTIONS"],
-             "allow_headers": ["Content-Type"],
+             "allow_headers": ["Content-Type", "Accept"],
              "expose_headers": ["Content-Type"],
-             "allow_credentials": False,  # Changed this
+             "supports_credentials": False,
              "max_age": 3600
          }
      })
+
+# Add CORS headers to all responses
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'https://drcmndr.github.io')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'false')
+    return response
 
 # Global agent variable
 agent = None
@@ -626,10 +630,9 @@ def home():
     })
 
 @app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
-def webhook():  # Removed async
+def webhook():
     if request.method == 'OPTIONS':
-        response = jsonify({'status': 'OK'})
-        return response, 200
+        return jsonify({'status': 'OK'}), 200
 
     if not agent:
         return jsonify({"error": "No model loaded"}), 503
@@ -642,7 +645,6 @@ def webhook():  # Removed async
         if not user_message:
             return jsonify({"error": "No message provided"}), 400
 
-        # Handle the async call differently
         responses = app.ensure_sync(agent.handle_text)(user_message)
         return jsonify([{
             'recipient_id': sender_id,
