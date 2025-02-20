@@ -65,13 +65,29 @@
 #     healthCheckTimeout: 180
 
 
+# working
+
+# services:
+#   - type: web
+#     name: msuitit-alab-chatbot
+#     env: python
+#     buildCommand: pip install flask gunicorn
+#     startCommand: gunicorn --bind 0.0.0.0:10000 --log-level debug app:app
+#     envVars:
+#       - key: PORT
+#         value: 10000
+
 
 services:
   - type: web
     name: msuitit-alab-chatbot
     env: python
-    buildCommand: pip install flask gunicorn
-    startCommand: gunicorn --bind 0.0.0.0:10000 --log-level debug app:app
+    buildCommand: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:10000 --workers 1 --timeout 180
     envVars:
       - key: PORT
         value: 10000
+      - key: RASA_MODEL
+        value: models/20250219-213623-prompt-factor.tar.gz

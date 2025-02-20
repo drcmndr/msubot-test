@@ -483,10 +483,39 @@
 
 # app.py test
 
+# from flask import Flask, jsonify
+# import os
+# import logging
+
+# logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger(__name__)
+
+# port = int(os.getenv('PORT', 10000))
+# logger.info(f"Port configured as: {port}")
+
+# app = Flask(__name__)
+
+# @app.route('/')
+# def home():
+#     return jsonify({"status": "alive", "port": port})
+
+# if __name__ == '__main__':
+#     logger.info(f"Starting server on port {port}")
+#     app.run(host='0.0.0.0', port=port)
+
+
+
+
+
+# app.py test 2
+
 from flask import Flask, jsonify
+from flask_cors import CORS
+from rasa.core.agent import Agent
 import os
 import logging
 
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -495,9 +524,33 @@ logger.info(f"Port configured as: {port}")
 
 app = Flask(__name__)
 
+# Configure CORS
+CORS(app, 
+     resources={
+         r"/*": {
+             "origins": ["*"],
+             "methods": ["GET", "POST", "OPTIONS"],
+             "allow_headers": ["Content-Type"],
+             "expose_headers": ["Content-Type"]
+         }
+     })
+
+# Initialize Rasa agent
+model_path = os.getenv('RASA_MODEL', 'models/20250219-213623-prompt-factor.tar.gz')
+try:
+    agent = Agent.load(model_path)
+    logger.info(f"Model loaded successfully from {model_path}")
+except Exception as e:
+    logger.error(f"Error loading model: {e}")
+    agent = None
+
 @app.route('/')
 def home():
-    return jsonify({"status": "alive", "port": port})
+    return jsonify({
+        "status": "alive",
+        "port": port,
+        "model_loaded": agent is not None
+    })
 
 if __name__ == '__main__':
     logger.info(f"Starting server on port {port}")
