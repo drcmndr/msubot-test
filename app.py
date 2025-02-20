@@ -514,6 +514,7 @@ from flask_cors import CORS
 from rasa.core.agent import Agent
 import os
 import logging
+from threading import Thread
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -535,21 +536,28 @@ CORS(app,
          }
      })
 
-# Initialize Rasa agent
-model_path = os.getenv('RASA_MODEL', 'models/20250219-213623-prompt-factor.tar.gz')
-try:
-    agent = Agent.load(model_path)
-    logger.info(f"Model loaded successfully from {model_path}")
-except Exception as e:
-    logger.error(f"Error loading model: {e}")
-    agent = None
+# Global agent variable
+agent = None
+
+def load_agent():
+    global agent
+    try:
+        model_path = os.getenv('RASA_MODEL', 'models/20250219-213623-prompt-factor.tar.gz')
+        agent = Agent.load(model_path)
+        logger.info(f"Model loaded successfully from {model_path}")
+    except Exception as e:
+        logger.error(f"Error loading model: {e}")
+
+# Start model loading in background
+Thread(target=load_agent, daemon=True).start()
 
 @app.route('/')
 def home():
     return jsonify({
         "status": "alive",
         "port": port,
-        "model_loaded": agent is not None
+        "model_loaded": agent is not None,
+        "model_loading": "in progress" if agent is None else "complete"
     })
 
 if __name__ == '__main__':
