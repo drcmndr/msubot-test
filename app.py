@@ -583,27 +583,8 @@ logger.info(f"Port configured as: {port}")
 
 app = Flask(__name__)
 
-# Configure CORS globally
-CORS(app, 
-     resources={
-         r"/*": {
-             "origins": ["https://drcmndr.github.io"],
-             "methods": ["GET", "POST", "OPTIONS"],
-             "allow_headers": ["Content-Type", "Accept"],
-             "expose_headers": ["Content-Type"],
-             "supports_credentials": False,
-             "max_age": 3600
-         }
-     })
-
-# Add CORS headers to all responses
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'https://drcmndr.github.io')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'false')
-    return response
+# Simple CORS configuration
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Global agent variable
 agent = None
@@ -625,14 +606,18 @@ def home():
     return jsonify({
         "status": "alive",
         "port": port,
-        "model_loaded": agent is not None,
-        "model_loading": "in progress" if agent is None else "complete"
+        "model_loaded": agent is not None
     })
 
 @app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
 def webhook():
+    # Handle preflight request
     if request.method == 'OPTIONS':
-        return jsonify({'status': 'OK'}), 200
+        response = jsonify({'status': 'OK'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
 
     if not agent:
         return jsonify({"error": "No model loaded"}), 503

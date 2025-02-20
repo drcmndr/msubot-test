@@ -331,22 +331,22 @@ function sendMessageToServer(message) {
     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
     console.log('Sending message to server:', { message, url });
     
-    fetch(url, {
+    return fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Content-Type': 'application/json'
         },
         mode: 'cors',
-        credentials: 'omit',
         body: JSON.stringify({ 
             sender: "user",
             message: message 
         })
     })
     .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', [...response.headers.entries()]);
+        
         if (!response.ok) {
-            console.log('Response headers:', Object.fromEntries(response.headers));
             throw new Error(`Server responded with status: ${response.status}`);
         }
         return response.json();
