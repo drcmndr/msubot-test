@@ -509,7 +509,66 @@
 
 # app.py test 2
 
-from flask import Flask, jsonify
+# from flask import Flask, jsonify
+# from flask_cors import CORS
+# from rasa.core.agent import Agent
+# import os
+# import logging
+# from threading import Thread
+
+# # Configure logging
+# logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger(__name__)
+
+# port = int(os.getenv('PORT', 10000))
+# logger.info(f"Port configured as: {port}")
+
+# app = Flask(__name__)
+
+# # Configure CORS
+# CORS(app, 
+#      resources={
+#          r"/*": {
+#              "origins": ["*"],
+#              "methods": ["GET", "POST", "OPTIONS"],
+#              "allow_headers": ["Content-Type"],
+#              "expose_headers": ["Content-Type"]
+#          }
+#      })
+
+# # Global agent variable
+# agent = None
+
+# def load_agent():
+#     global agent
+#     try:
+#         model_path = os.getenv('RASA_MODEL', 'models/20250219-213623-prompt-factor.tar.gz')
+#         agent = Agent.load(model_path)
+#         logger.info(f"Model loaded successfully from {model_path}")
+#     except Exception as e:
+#         logger.error(f"Error loading model: {e}")
+
+# # Start model loading in background
+# Thread(target=load_agent, daemon=True).start()
+
+# @app.route('/')
+# def home():
+#     return jsonify({
+#         "status": "alive",
+#         "port": port,
+#         "model_loaded": agent is not None,
+#         "model_loading": "in progress" if agent is None else "complete"
+#     })
+
+# if __name__ == '__main__':
+#     logger.info(f"Starting server on port {port}")
+#     app.run(host='0.0.0.0', port=port)
+
+
+
+# app.py test 3 
+
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from rasa.core.agent import Agent
 import os
@@ -525,14 +584,15 @@ logger.info(f"Port configured as: {port}")
 
 app = Flask(__name__)
 
-# Configure CORS
+# Configure CORS - Updated configuration
 CORS(app, 
      resources={
          r"/*": {
-             "origins": ["*"],
+             "origins": ["https://drcmndr.github.io", "http://localhost:5500"],
              "methods": ["GET", "POST", "OPTIONS"],
              "allow_headers": ["Content-Type"],
-             "expose_headers": ["Content-Type"]
+             "expose_headers": ["Content-Type"],
+             "supports_credentials": False  # Changed from True to False
          }
      })
 
@@ -559,6 +619,39 @@ def home():
         "model_loaded": agent is not None,
         "model_loading": "in progress" if agent is None else "complete"
     })
+
+@app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
+async def webhook():
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'OK'})
+        response.headers.add('Access-Control-Allow-Origin', 'https://drcmndr.github.io')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response, 200
+
+    if not agent:
+        return jsonify({"error": "No model loaded"}), 503
+
+    try:
+        data = request.json
+        user_message = data.get('message')
+        sender_id = data.get('sender', 'default')
+
+        if not user_message:
+            return jsonify({"error": "No message provided"}), 400
+
+        responses = await agent.handle_text(user_message)
+        response = jsonify([{
+            'recipient_id': sender_id,
+            'text': r.get('text', str(r)) if isinstance(r, dict) else str(r)
+        } for r in responses])
+        
+        response.headers.add('Access-Control-Allow-Origin', 'https://drcmndr.github.io')
+        return response
+
+    except Exception as e:
+        logger.error(f"Error processing message: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     logger.info(f"Starting server on port {port}")
