@@ -36,35 +36,60 @@
 
 
 
+# # Dockerfile
 
-FROM python:3.9.12-slim
+# FROM python:3.9.12-slim
+
+# WORKDIR /app
+
+# # Install system dependencies
+# RUN apt-get update && apt-get install -y \
+#     build-essential \
+#     curl \
+#     && rm -rf /var/lib/apt/lists/*
+
+# # Upgrade pip
+# RUN pip install --upgrade pip
+
+# # Install minimal dependencies for serving
+# RUN pip install --no-cache-dir flask==2.0.1 flask-cors==3.0.10 gunicorn==20.1.0
+
+# # Copy the app and model first
+# COPY app.py .
+# COPY models/ models/
+
+# # Now install Rasa with minimal dependencies
+# # This installs only what's needed to run the model, not train it
+# RUN pip install --no-cache-dir rasa==3.6.2 --only-binary=:all:
+
+# # Copy the rest of the application
+# COPY . .
+
+# # Expose the port
+# EXPOSE 10000
+
+# # Command to run the application
+# CMD gunicorn --bind 0.0.0.0:10000 app:app
+
+
+FROM rasa/rasa:3.6.2-full
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Install Flask and dependencies
+RUN pip install flask==2.0.1 flask-cors==3.0.10 gunicorn==20.1.0
 
-# Upgrade pip
-RUN pip install --upgrade pip
+# Copy your Flask application
+COPY app.py /app/
+COPY check_port.py /app/ 
 
-# Install minimal dependencies for serving
-RUN pip install --no-cache-dir flask==2.0.1 flask-cors==3.0.10 gunicorn==20.1.0
+# Create models directory if it doesn't exist
+RUN mkdir -p /app/models
 
-# Copy the app and model first
-COPY app.py .
-COPY models/ models/
+# Copy your model files
+COPY models/ /app/models/
 
-# Now install Rasa with minimal dependencies
-# This installs only what's needed to run the model, not train it
-RUN pip install --no-cache-dir rasa==3.6.2 --only-binary=:all:
-
-# Copy the rest of the application
-COPY . .
-
-# Expose the port
+# Expose port
 EXPOSE 10000
 
 # Command to run the application
