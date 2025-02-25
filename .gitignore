@@ -1,32 +1,8 @@
 # Rasa specific
-# models/
-.rasa/
-story_graph.dot
-
-# Python specific
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-env/
-
-# VS Code
-.vscode/
-
-# Docker
-.docker/
-
-# System specific
-.DS_Store
-.env
-.keras/
-.config/
-
-# Byte-compiled files
-*.pyc
-
-# Logs
-*.log
-logs/
+**/__pycache__
+**/.git
+**/.gitignore
+**/.venv
+**/.env
+**/.DS_Store
+**/Thumbs.db

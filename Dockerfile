@@ -27,14 +27,18 @@ FROM rasa/rasa:3.6.2-full
 
 WORKDIR /app
 
-# Create models directory if it doesn't exist
+# Create models directory
 RUN mkdir -p /app/models
 
 # Copy your model files
 COPY models/ /app/models/
 
+# Copy start script
+COPY start.sh /app/
+RUN chmod +x /app/start.sh
+
 # Expose port
 EXPOSE 10000
 
-# Command to run the application
-CMD rasa run --enable-api --port $PORT --model models/20250219-213623-prompt-factor.tar.gz --cors "*"
+# Start Rasa server
+CMD ["/app/start.sh"]
