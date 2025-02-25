@@ -126,205 +126,6 @@ function scrollToBottom() {
     }
 }
 
-
-// function sendMessageToServer(message) {
-//     const url = 'http://localhost:5005/webhooks/rest/webhook';
-//     console.log('Sending message to server:', { message });
-    
-//     fetch(url, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json'
-//         },
-//         mode: 'cors',
-//         body: JSON.stringify({ 
-//             sender: "user",
-//             message: message 
-//         })
-//     })
-//     .then(response => {
-//         console.log('Response status:', response.status);
-//         if (!response.ok) {
-//             throw new Error(`Server responded with status: ${response.status}`);
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         console.log('Received response:', data);
-//         removeTypingIndicator();
-        
-//         if (Array.isArray(data) && data.length > 0) {
-//             // Combine multiple messages if present
-//             const messages = data.map(response => response.text).join('\n\n');
-//             addMessageWithTypewriterEffect("bot", messages);
-//         } else {
-//             addMessageWithTypewriterEffect("bot", "I'm not sure how to respond to that.");
-//         }
-//     })
-//     .catch((error) => {
-//         console.error('Network or parsing error:', error);
-//         removeTypingIndicator();
-//         addMessageWithTypewriterEffect(
-//             "bot", 
-//             `Sorry, I encountered an error: ${error.message}. Please ensure the Rasa server is running on port 5005.`
-//         );
-//     });
-// }
-
-
-// function sendMessageToServer(message) {
-//     // Use environment-based URL
-//     const BACKEND_URL = window.location.hostname === 'localhost' 
-//         ? 'http://localhost:5005' 
-//         : 'https://msubot-test.onrender.com/';
-    
-//     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
-//     console.log('Sending message to server:', { message });
-    
-//     fetch(url, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json'
-//         },
-//         mode: 'cors',
-//         body: JSON.stringify({ 
-//             sender: "user",
-//             message: message 
-//         })
-//     })
-//     .then(response => {
-//         console.log('Response status:', response.status);
-//         if (!response.ok) {
-//             throw new Error(`Server responded with status: ${response.status}`);
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         console.log('Received response:', data);
-//         removeTypingIndicator();
-        
-//         if (Array.isArray(data) && data.length > 0) {
-//             const messages = data.map(response => response.text).join('\n\n');
-//             addMessageWithTypewriterEffect("bot", messages);
-//         } else {
-//             addMessageWithTypewriterEffect("bot", "I'm not sure how to respond to that.");
-//         }
-//     })
-//     .catch((error) => {
-//         console.error('Network or parsing error:', error);
-//         removeTypingIndicator();
-//         addMessageWithTypewriterEffect(
-//             "bot", 
-//             `Sorry, I encountered an error: ${error.message}. Please try again later.`
-//         );
-//     });
-// }
-
-// function sendMessageToServer(message) {
-//     // Use environment-based URL (remove the trailing slash from the Render URL)
-//     const BACKEND_URL = window.location.hostname === 'localhost' 
-//         ? 'http://localhost:5005' 
-//         : 'https://msubot-test.onrender.com';  // Make sure this matches your Render URL exactly
-    
-//     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
-//     console.log('Sending message to server:', { message, url });
-    
-//     fetch(url, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//             'Accept': 'application/json'
-//         },
-//         mode: 'cors',
-//         credentials: 'omit',  // Change from 'include' to 'omit' since we don't need cookies
-//         body: JSON.stringify({ 
-//             sender: "user",
-//             message: message 
-//         })
-//     })
-//     .then(response => {
-//         console.log('Response status:', response.status);
-//         console.log('Response headers:', response.headers);  // Add headers logging
-        
-//         if (!response.ok) {
-//             throw new Error(`Server responded with status: ${response.status}`);
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         console.log('Received response:', data);
-//         removeTypingIndicator();
-        
-//         if (Array.isArray(data) && data.length > 0) {
-//             const messages = data.map(response => response.text).join('\n\n');
-//             addMessageWithTypewriterEffect("bot", messages);
-//         } else {
-//             addMessageWithTypewriterEffect("bot", "I'm not sure how to respond to that.");
-//         }
-//     })
-//     .catch((error) => {
-//         console.error('Network or parsing error:', error);
-//         removeTypingIndicator();
-//         addMessageWithTypewriterEffect(
-//             "bot", 
-//             `Sorry, I encountered an error: ${error.message}. Please try again later.`
-//         );
-//     });
-// }
-
-// function sendMessageToServer(message) {
-//     const BACKEND_URL = window.location.hostname === 'localhost' 
-//         ? 'http://localhost:10000'  // Changed to match server port
-//         : 'https://msubot-test.onrender.com';
-    
-//     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
-//     console.log('Sending message to server:', { message, url });
-    
-//     fetch(url, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//             'Accept': 'application/json'
-//         },
-//         mode: 'cors',
-//         credentials: 'omit',
-//         body: JSON.stringify({ 
-//             sender: "user",
-//             message: message 
-//         })
-//     })
-//     .then(response => {
-//         console.log('Response status:', response.status);
-//         console.log('Response headers:', response.headers);
-        
-//         if (!response.ok) {
-//             throw new Error(`Server responded with status: ${response.status}`);
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         console.log('Received response:', data);
-//         removeTypingIndicator();
-        
-//         if (Array.isArray(data) && data.length > 0) {
-//             const messages = data.map(response => response.text).join('\n\n');
-//             addMessageWithTypewriterEffect("bot", messages);
-//         } else {
-//             addMessageWithTypewriterEffect("bot", "I'm not sure how to respond to that.");
-//         }
-//     })
-//     .catch((error) => {
-//         console.error('Network or parsing error:', error);
-//         removeTypingIndicator();
-//         addMessageWithTypewriterEffect(
-//             "bot", 
-//             `Sorry, I encountered an error: ${error.message}. Please try again later.`
-//         );
-//     });
-// }
-
-// sendMessageToServer new progress
-
 // function sendMessageToServer(message) {
 //     const BACKEND_URL = window.location.hostname === 'localhost' 
 //         ? 'http://localhost:10000' 
@@ -339,20 +140,33 @@ function scrollToBottom() {
 //             'Content-Type': 'application/json'
 //         },
 //         mode: 'cors',
-//         credentials: 'omit',  // Explicitly set to omit
+//         credentials: 'omit',
 //         body: JSON.stringify({ 
 //             sender: "user",
 //             message: message 
 //         })
 //     })
-//     .then(response => {
+//     .then(async response => {
 //         console.log('Response status:', response.status);
 //         console.log('Response headers:', [...response.headers.entries()]);
         
+//         const data = await response.json();
+        
+//         if (response.status === 503) {
+//             // Model is loading
+//             if (data.status === 'loading' || data.status === 'reloading') {
+//                 // Wait 3 seconds and try again
+//                 await new Promise(resolve => setTimeout(resolve, 3000));
+//                 return sendMessageToServer(message); // Retry the request
+//             }
+//             throw new Error(data.error || 'Service temporarily unavailable');
+//         }
+
 //         if (!response.ok) {
 //             throw new Error(`Server responded with status: ${response.status}`);
 //         }
-//         return response.json();
+
+//         return data;
 //     })
 //     .then(data => {
 //         console.log('Received response:', data);
@@ -377,9 +191,10 @@ function scrollToBottom() {
 
 
 function sendMessageToServer(message) {
+    // Use the correct Render backend URL
     const BACKEND_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:10000' 
-        : 'https://msubot-test.onrender.com';
+        : 'https://msubot-test.onrender.com';  // ← CHANGE THIS to your Render service URL
     
     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
     console.log('Sending message to server:', { message, url });
@@ -390,33 +205,18 @@ function sendMessageToServer(message) {
             'Content-Type': 'application/json'
         },
         mode: 'cors',
-        credentials: 'omit',
         body: JSON.stringify({ 
             sender: "user",
             message: message 
         })
     })
-    .then(async response => {
+    .then(response => {
         console.log('Response status:', response.status);
-        console.log('Response headers:', [...response.headers.entries()]);
         
-        const data = await response.json();
-        
-        if (response.status === 503) {
-            // Model is loading
-            if (data.status === 'loading' || data.status === 'reloading') {
-                // Wait 3 seconds and try again
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                return sendMessageToServer(message); // Retry the request
-            }
-            throw new Error(data.error || 'Service temporarily unavailable');
-        }
-
         if (!response.ok) {
             throw new Error(`Server responded with status: ${response.status}`);
         }
-
-        return data;
+        return response.json();
     })
     .then(data => {
         console.log('Received response:', data);
@@ -438,7 +238,6 @@ function sendMessageToServer(message) {
         );
     });
 }
-
 
 function addMessageWithTypewriterEffect(sender, message) {
     const messagesDiv = document.getElementById("messages");
