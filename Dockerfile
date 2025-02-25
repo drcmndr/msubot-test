@@ -77,12 +77,8 @@ FROM rasa/rasa:3.6.2-full
 
 WORKDIR /app
 
-# Install Flask and dependencies with --user flag
-RUN pip install --user flask==2.0.1 flask-cors==3.0.10 gunicorn==20.1.0
-
-# Copy your Flask application
-COPY app.py /app/
-COPY check_port.py /app/ 
+# Copy your server script
+COPY serve.py /app/
 
 # Create models directory if it doesn't exist
 RUN mkdir -p /app/models
@@ -94,4 +90,4 @@ COPY models/ /app/models/
 EXPOSE 10000
 
 # Command to run the application
-CMD python -m gunicorn --bind 0.0.0.0:10000 app:app
+CMD python serve.py
