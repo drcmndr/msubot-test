@@ -886,6 +886,7 @@
 
 # REVERT TO THIS VERSION AFTER
 
+# app.py version almost okay
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS

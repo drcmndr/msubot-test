@@ -78,6 +78,29 @@
 #         value: 10000
 
 
+# services:
+#   - type: web
+#     name: msuitit-alab-chatbot
+#     env: python
+#     buildCommand: |
+#       python -m pip install --upgrade pip
+#       pip install setuptools==59.6.0
+#       pip install wheel
+#       pip install -r requirements.txt
+#       pip install --no-cache-dir spacy
+#       python -m spacy download en_core_web_sm
+#     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 180
+#     envVars:
+#       - key: PORT
+#         value: 10000
+#       - key: RASA_MODEL
+#         value: models/20250219-213623-prompt-factor.tar.gz
+#       - key: PYTHON_VERSION
+#         value: 3.9.12
+
+# this version is also good but let's try this one
+
+
 services:
   - type: web
     name: msuitit-alab-chatbot
@@ -89,7 +112,7 @@ services:
       pip install -r requirements.txt
       pip install --no-cache-dir spacy
       python -m spacy download en_core_web_sm
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 180
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 600 --graceful-timeout 300 --keep-alive 5
     envVars:
       - key: PORT
         value: 10000
@@ -97,3 +120,7 @@ services:
         value: models/20250219-213623-prompt-factor.tar.gz
       - key: PYTHON_VERSION
         value: 3.9.12
+    scaling:
+      minInstances: 1
+      maxInstances: 1
+      targetMemoryPercent: 90
