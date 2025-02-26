@@ -451,71 +451,150 @@
 # simple app.py
 
 
-import os
-import subprocess
-import threading
+# import os
+# import subprocess
+# import threading
+# from flask import Flask, request, jsonify
+# from flask_cors import CORS
+
+# app = Flask(__name__)
+# CORS(app)
+
+# # Get port from environment
+# PORT = int(os.environ.get("PORT", 10000))
+# MODEL_PATH = os.environ.get("RASA_MODEL", "models/20250219-213623-prompt-factor.tar.gz")
+
+# # Global variable to store Rasa process
+# rasa_process = None
+
+# def start_rasa_server():
+#     """Start Rasa server in a separate process"""
+#     global rasa_process
+    
+#     # Define the command to start Rasa
+#     cmd = [
+#         "rasa", "run", 
+#         "--enable-api",
+#         f"--port={PORT+1}",  # Use PORT+1 for Rasa to avoid conflict with Flask
+#         f"--model={MODEL_PATH}",
+#         "--cors", "*"
+#     ]
+    
+#     print(f"Starting Rasa server with command: {' '.join(cmd)}")
+    
+#     # Start Rasa as a subprocess
+#     rasa_process = subprocess.Popen(cmd)
+#     print("Rasa server started!")
+
+# @app.route('/')
+# def home():
+#     return jsonify({
+#         "status": "alive",
+#         "message": "Flask server is running. Use /webhooks/rest/webhook for chatbot API."
+#     })
+
+# @app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
+# def webhook():
+#     if request.method == 'OPTIONS':
+#         return jsonify({"status": "OK"})
+        
+#     # Forward the request to Rasa
+#     import requests
+    
+#     rasa_url = f"http://localhost:{PORT+1}/webhooks/rest/webhook"
+#     headers = {'Content-Type': 'application/json'}
+    
+#     try:
+#         rasa_response = requests.post(
+#             rasa_url,
+#             json=request.json,
+#             headers=headers
+#         )
+#         return jsonify(rasa_response.json())
+#     except Exception as e:
+#         return jsonify([{"text": f"Error: {str(e)}"}]), 500
+
+# # Start Rasa when Flask starts
+# threading.Thread(target=start_rasa_server, daemon=True).start()
+
+# if __name__ == "__main__":
+#     app.run(host="0.0.0.0", port=PORT)
+
+
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import os
+import random
 
 app = Flask(__name__)
 CORS(app)
 
-# Get port from environment
-PORT = int(os.environ.get("PORT", 10000))
-MODEL_PATH = os.environ.get("RASA_MODEL", "models/20250219-213623-prompt-factor.tar.gz")
-
-# Global variable to store Rasa process
-rasa_process = None
-
-def start_rasa_server():
-    """Start Rasa server in a separate process"""
-    global rasa_process
-    
-    # Define the command to start Rasa
-    cmd = [
-        "rasa", "run", 
-        "--enable-api",
-        f"--port={PORT+1}",  # Use PORT+1 for Rasa to avoid conflict with Flask
-        f"--model={MODEL_PATH}",
-        "--cors", "*"
+# Basic MSU-IIT chatbot responses
+RESPONSES = {
+    # Add your key intents and example responses here
+    "greeting": [
+        "Hello! I'm A.L.A.B, your MSU-IIT virtual assistant. How can I help you today?"
+    ],
+    "farewell": [
+        "Goodbye! Thank you for chatting with A.L.A.B."
+    ],
+    "about_msuiit": [
+        "MSU-IIT (Mindanao State University - Iligan Institute of Technology) is one of the premier universities in the Philippines, known for excellence in engineering, science, and technology education."
+    ],
+    "fallback": [
+        "I'm still learning. Could you rephrase your question or ask me about MSU-IIT programs and services?"
     ]
+}
+
+# Simple keyword-based intent detection
+KEYWORDS = {
+    "greeting": ["hello", "hi", "hey", "greetings"],
+    "farewell": ["bye", "goodbye", "see you"],
+    "about_msuiit": ["msuiit", "university", "college", "campus"]
+    # Add more keywords as needed
+}
+
+def get_intent(message):
+    message = message.lower()
     
-    print(f"Starting Rasa server with command: {' '.join(cmd)}")
+    # Check each intent's keywords
+    for intent, keywords in KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in message:
+                return intent
     
-    # Start Rasa as a subprocess
-    rasa_process = subprocess.Popen(cmd)
-    print("Rasa server started!")
+    # Default fallback
+    return "fallback"
 
 @app.route('/')
 def home():
-    return jsonify({
-        "status": "alive",
-        "message": "Flask server is running. Use /webhooks/rest/webhook for chatbot API."
-    })
+    return jsonify({"status": "online", "message": "A.L.A.B Bot is ready"})
 
 @app.route('/webhooks/rest/webhook', methods=['POST', 'OPTIONS'])
 def webhook():
     if request.method == 'OPTIONS':
         return jsonify({"status": "OK"})
-        
-    # Forward the request to Rasa
-    import requests
-    
-    rasa_url = f"http://localhost:{PORT+1}/webhooks/rest/webhook"
-    headers = {'Content-Type': 'application/json'}
     
     try:
-        rasa_response = requests.post(
-            rasa_url,
-            json=request.json,
-            headers=headers
-        )
-        return jsonify(rasa_response.json())
+        data = request.json
+        message = data.get('message', '')
+        sender = data.get('sender', 'user')
+        
+        # Get intent and response
+        intent = get_intent(message)
+        response = random.choice(RESPONSES.get(intent, RESPONSES["fallback"]))
+        
+        return jsonify([{
+            "recipient_id": sender,
+            "text": response
+        }])
     except Exception as e:
-        return jsonify([{"text": f"Error: {str(e)}"}]), 500
-
-# Start Rasa when Flask starts
-threading.Thread(target=start_rasa_server, daemon=True).start()
+        return jsonify([{
+            "recipient_id": "user",
+            "text": "Sorry, I'm having trouble understanding right now."
+        }])
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=PORT)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
