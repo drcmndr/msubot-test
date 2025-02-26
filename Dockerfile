@@ -23,22 +23,31 @@
 
 
 
+# Dockerfile
+
 FROM rasa/rasa:3.6.2-full
 
 WORKDIR /app
 
-# Create models directory
+# Install additional dependencies
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire app directory
+COPY . /app/
+
+# Create models directory if it doesn't exist
 RUN mkdir -p /app/models
 
-# Copy your model files
-COPY models/ /app/models/
-
-# Copy start script
-COPY start.sh /app/
+# Make start script executable
 RUN chmod +x /app/start.sh
+
+# Set environment variables
+ENV PORT=10000
+ENV RASA_MODEL=models/20250219-213623-prompt-factor.tar.gz
 
 # Expose port
 EXPOSE 10000
 
-# Start Rasa server
-CMD ["/app/start.sh"]
+# Start Flask server
+CMD ["python", "app.py"]
