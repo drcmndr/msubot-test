@@ -194,7 +194,7 @@ function sendMessageToServer(message) {
     // Use the correct Render backend URL
     const BACKEND_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:10000' 
-        : 'https://msubot-test.onrender.com';  // ← CHANGE THIS to your Render service URL
+        : 'https://msubot-testing.onrender.com';  // ← CHANGE THIS to your Render service URL
     
     const url = `${BACKEND_URL}/webhooks/rest/webhook`;
     console.log('Sending message to server:', { message, url });
