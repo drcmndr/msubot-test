@@ -87,6 +87,8 @@ services:
       pip install setuptools==59.6.0
       pip install wheel
       pip install -r requirements.txt
+      pip install --no-cache-dir spacy
+      python -m spacy download en_core_web_sm
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 180
     envVars:
       - key: PORT
