@@ -130,6 +130,43 @@
 
 
 
+# could revert to this later
+
+# services:
+#   - type: web
+#     name: msuitit-alab-chatbot
+#     env: python
+#     plan: free
+#     buildCommand: |
+#       python -m pip install --upgrade pip
+#       pip install setuptools==59.6.0
+#       pip install wheel
+#       pip install psutil  # For memory monitoring
+#       pip install -r requirements.txt
+#     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 600 --graceful-timeout 300 --keep-alive 5 --max-requests 5 --max-requests-jitter 5 --preload
+#     envVars:
+#       - key: PORT
+#         value: 10000
+#       - key: RASA_MODEL
+#         value: models/20250219-213623-prompt-factor.tar.gz
+#       - key: PYTHON_VERSION
+#         value: 3.9.12
+#       - key: MALLOC_TRIM_THRESHOLD_
+#         value: 65536
+#       - key: PYTHONUNBUFFERED
+#         value: "1"
+#       - key: PYTHONHASHSEED
+#         value: "0"
+#       - key: TF_CPP_MIN_LOG_LEVEL
+#         value: "2"
+#       - key: TRANSFORMERS_OFFLINE
+#         value: "1"
+#       - key: TOKENIZERS_PARALLELISM
+#         value: "false"
+#     scaling:
+#       minInstances: 1
+#       maxInstances: 1
+#       targetMemoryPercent: 90
 
 
 services:
@@ -140,30 +177,23 @@ services:
     buildCommand: |
       python -m pip install --upgrade pip
       pip install setuptools==59.6.0
-      pip install wheel
-      pip install psutil  # For memory monitoring
+      pip install wheel psutil requests
       pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 600 --graceful-timeout 300 --keep-alive 5 --max-requests 5 --max-requests-jitter 5 --preload
+    startCommand: |
+      gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 180 --keep-alive 5 --log-level warning
     envVars:
       - key: PORT
         value: 10000
       - key: RASA_MODEL
         value: models/20250219-213623-prompt-factor.tar.gz
-      - key: PYTHON_VERSION
-        value: 3.9.12
-      - key: MALLOC_TRIM_THRESHOLD_
-        value: 65536
       - key: PYTHONUNBUFFERED
         value: "1"
-      - key: PYTHONHASHSEED
-        value: "0"
+      - key: MALLOC_TRIM_THRESHOLD_
+        value: "65536"
       - key: TF_CPP_MIN_LOG_LEVEL
         value: "2"
       - key: TRANSFORMERS_OFFLINE
         value: "1"
       - key: TOKENIZERS_PARALLELISM
         value: "false"
-    scaling:
-      minInstances: 1
-      maxInstances: 1
-      targetMemoryPercent: 90
+    healthCheckPath: /
